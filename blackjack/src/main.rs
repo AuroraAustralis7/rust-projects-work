@@ -1,12 +1,14 @@
-use std::collections::HashMap;
+use std::collections::HashMap; // Adds Hashmaps
+use rand::seq::SliceRandom; // Adds shuffle method
+use rand::Rng; // Adds random number generator
 
 fn main() {
     let deck_map = deck_map();
+    let mut deck = create_deck();
+    let mut rng = rand::rng();
+    deck.shuffle(&mut rng);
+    // println!("{:?}", deck);
     println!("Hello, gambler!");
-
-    while (true) {
-        
-    }
 }
 
 // clears deck and makes new deck
