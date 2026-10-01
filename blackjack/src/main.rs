@@ -20,17 +20,17 @@ fn main() {
 
     // dealer drawing phase
     let draw_info_dealer = draw(deck);
-    let host_hand = (draw_info_dealer.0, draw_info_dealer.1);
+    let host_hand = vec![draw_info_dealer.0, draw_info_dealer.1];
     deck = draw_info_dealer.2;
 
-    println!("HOST HAND: {}, UNKNOWN", &host_hand.0);
+    println!("HOST HAND: {}, UNKNOWN", &host_hand[0]);
 
     // player drawing phase
     let draw_info_player = draw(deck);
-    let player_hand = (draw_info_player.0, draw_info_player.1);
+    let player_hand = vec![draw_info_player.0, draw_info_player.1];
     deck = draw_info_player.2;
 
-    println!("YOUR HAND: {}, {}", &player_hand.0,  &player_hand.1);
+    println!("YOUR HAND: {}, {}", &player_hand[0],  &player_hand[1]);
 
     // println!("{:?}", deck);
 }
@@ -121,8 +121,8 @@ fn create_deck() -> Vec<String> {
 
 fn draw(deck: Vec<String>) -> (String, String, Vec<String>) {
 
-    let new_deck = deck[2..deck.len()].to_vec();
-    (deck[0].to_string(), deck[1].to_string(), new_deck)
+    let new_deck = deck[0..deck.len()-2].to_vec();
+    (deck[deck.len() - 2].to_string(), deck[deck.len()-1].to_string(), new_deck)
 }
 
 fn bet(money: &u32) -> (u32, u32) {
@@ -155,4 +155,35 @@ fn bet(money: &u32) -> (u32, u32) {
     }
 }
 return_pair
+}
+
+fn player_draw_phase(hand: Vec<String>, deck: Vec<String>) -> Vec<String> {
+    let mut player_continuing = false;
+
+    let mut current_hand = hand.clone();
+
+    let mut current_deck = deck.clone();
+
+    while(player_continuing) {
+        println!("Draw or pass?");
+        println!("To draw, type in 'draw' or 'd'. To pass, type in 'pass' or 'p'.");
+
+        // Take the input from the player. 
+        let mut input = String::new();
+
+        io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+
+        // trim anything unwanted from the input
+        input = input.trim().parse::<String>().unwrap();
+
+        match input {
+            "draw".to_string() => {
+
+            }
+        }
+    }
+
+    current_hand
 }
