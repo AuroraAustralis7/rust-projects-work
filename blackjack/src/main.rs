@@ -27,8 +27,15 @@ fn main() {
 
     // player drawing phase
     let draw_info_player = draw(deck);
-    let player_hand = vec![draw_info_player.0, draw_info_player.1];
+    let mut player_hand = vec![draw_info_player.0, draw_info_player.1];
     deck = draw_info_player.2;
+
+    // player playing phase
+    let player_info = player_play_phase(player_hand, deck);
+    player_hand = player_info.0;
+    deck = player_info.1;
+
+    // Host playing phase
 
     println!("YOUR HAND: {}, {}", &player_hand[0],  &player_hand[1]);
 
@@ -157,8 +164,10 @@ fn bet(money: &u32) -> (u32, u32) {
 return_pair
 }
 
-fn player_draw_phase(hand: Vec<String>, deck: Vec<String>) -> Vec<String> {
-    let mut player_continuing = false;
+fn player_play_phase(hand: Vec<String>, mut deck: Vec<String>) -> (Vec<String>, Vec<String>) {
+    // Takes in the current hand and deck, then returns the modified hand and deck after the player acts.
+
+    let mut player_continuing = true;
 
     let mut current_hand = hand.clone();
 
@@ -178,12 +187,41 @@ fn player_draw_phase(hand: Vec<String>, deck: Vec<String>) -> Vec<String> {
         // trim anything unwanted from the input
         input = input.trim().parse::<String>().unwrap();
 
-        match input {
-            "draw".to_string() => {
-
-            }
+        if input == "draw" || input == "d" {
+            println!("Drew one card!");
+            let mut card = deck.remove(deck.len()-1);
+            current_hand.push(card);
+            println!("New hand: {:?}", current_hand)
+        }
+        if input == "pass" || input == "p" {
+            println!("Passed.");
+            player_continuing = false;
         }
     }
 
-    current_hand
+    (current_hand, current_deck)
+}
+
+fn host_play_phase(hand: Vec<String>, mut deck: Vec<String>) -> (Vec<String>, Vec<String>){
+    // Takes in the current hand and deck, then returns the modified hand and deck after the host acts.
+    // Host stops drawing at the standard 17.
+
+    let mut host_continuing = true;
+
+    let mut current_host_hand = hand.clone();
+
+    let mut current_deck = deck.clone();
+
+    let mut hand_value;
+
+    for 
+
+    while(host_continuing) {
+        println!("Draw or pass?");
+        println!("To draw, type in 'draw' or 'd'. To pass, type in 'pass' or 'p'.");
+
+        
+    }
+
+    (current_hand, current_deck)
 }
