@@ -4,13 +4,16 @@ use std::io::{self, Write};
 
 fn main() {
     // deck init
-    let deck_map = deck_map();
     let mut deck = create_deck();
-    let mut rng = rand::rng();
-    deck.shuffle(&mut rng);
 
     //money dealing phase
     let mut money: u32 = 100;
+    loop {
+
+    // deck shuffle
+    let mut rng = rand::rng();
+    deck.shuffle(&mut rng);
+
     println!("You have {money}. You started out with 100.");
     let bet_info = bet(&money);
     money = bet_info.0;
@@ -29,16 +32,44 @@ fn main() {
     let draw_info_player = draw(deck);
     let mut player_hand = vec![draw_info_player.0, draw_info_player.1];
     deck = draw_info_player.2;
+    println!("YOUR HAND: {}, {}", &player_hand[0],  &player_hand[1]);
 
     // player playing phase
     let player_info = player_play_phase(player_hand, deck);
-    player_hand = player_info.0;
+    let player_won = player_info.2;
     deck = player_info.1;
+    player_hand = player_info.0;
 
-    // Host playing phase
+    /*
+     If the player wins decidedly with a blackjack after their playing phase,
+     they receive their bet. Otherwise, the host plays and the outcome is decided from there.
+     */
+    if player_won {
+        money += 2 * bet_amount;
+        println!("You won {}!", 2 * bet_amount);
+        println!("You now have {}", money);
+    }
+    else {
+        // host play phase
+        let host_info = host_play_phase(player_hand, host_hand, deck);
+        deck = host_info.1;
+        if host_info.2 == "HOST LOSE" {
+            money += 2 * bet_amount;
+            println!("You won {}!", 2 * bet_amount);
+            println!("You now have {}", money);
+        }
+        if host_info.2 == "PUSH" {
+            money += bet_amount;
+            println!("You won your bet back.");
+            println!("You now have {}", money);
+        }
+    }
 
-    println!("YOUR HAND: {}, {}", &player_hand[0],  &player_hand[1]);
-
+    // deal with the case where the deck is running out of cards
+    if (deck.len() < 52/4) {
+        deck = create_deck();
+    }
+}
     // println!("{:?}", deck);
 }
 
@@ -157,14 +188,14 @@ fn bet(money: &u32) -> (u32, u32) {
         accepted = true;
     }
     else {
-        println!("Wrong bet amount.");
+        println!("Invalid bet amount.");
         return_pair = (*money, 0);
     }
 }
 return_pair
 }
 
-fn player_play_phase(hand: Vec<String>, mut deck: Vec<String>) -> (Vec<String>, Vec<String>) {
+fn player_play_phase(hand: Vec<String>, deck: Vec<String>) -> (Vec<String>, Vec<String>, bool) {
     // Takes in the current hand and deck, then returns the modified hand and deck after the player acts.
 
     let mut player_continuing = true;
@@ -173,9 +204,16 @@ fn player_play_phase(hand: Vec<String>, mut deck: Vec<String>) -> (Vec<String>, 
 
     let mut current_deck = deck.clone();
 
+    let mut player_won = false;
+
+    let mut player_hand_value = hand_value(&current_hand);
+
     while(player_continuing) {
         println!("Draw or pass?");
         println!("To draw, type in 'draw' or 'd'. To pass, type in 'pass' or 'p'.");
+        
+        // update hand value
+        player_hand_value = hand_value(&current_hand);
 
         // Take the input from the player. 
         let mut input = String::new();
@@ -189,39 +227,101 @@ fn player_play_phase(hand: Vec<String>, mut deck: Vec<String>) -> (Vec<String>, 
 
         if input == "draw" || input == "d" {
             println!("Drew one card!");
-            let mut card = deck.remove(deck.len()-1);
+            let card = current_deck.remove(current_deck.len()-1);
             current_hand.push(card);
-            println!("New hand: {:?}", current_hand)
+            println!("New hand: {:?}", current_hand);
         }
-        if input == "pass" || input == "p" {
+        else if input == "pass" || input == "p" {
             println!("Passed.");
+            println!("End hand: {:?}", current_hand);
+            player_won = false;
+            player_continuing = false;
+        }
+        else {
+            println!("Invalid input, please type either 'd', 'draw', 'p', or 'pass'");
+        }
+
+        // re-update hand value after draw
+        player_hand_value = hand_value(&current_hand);
+
+        // deal with win check
+        if player_hand_value == 21 {
+            player_won = true;
+            player_continuing = false;
+        }
+        if player_hand_value > 21 {
+            player_won = false;
             player_continuing = false;
         }
     }
 
-    (current_hand, current_deck)
+    (current_hand, current_deck, player_won)
 }
 
-fn host_play_phase(hand: Vec<String>, mut deck: Vec<String>) -> (Vec<String>, Vec<String>){
+// #[cfg(none)]
+fn host_play_phase(player_hand: Vec<String>, host_hand: Vec<String>, deck: Vec<String>) -> (Vec<String>, Vec<String>, String){
     // Takes in the current hand and deck, then returns the modified hand and deck after the host acts.
     // Host stops drawing at the standard 17.
 
     let mut host_continuing = true;
 
-    let mut current_host_hand = hand.clone();
+    let mut game_status: String = "".to_string();
+
+    let mut current_host_hand = host_hand.clone();
 
     let mut current_deck = deck.clone();
 
-    let mut hand_value;
+    let mut current_hand_value = hand_value(&current_host_hand);
 
-    for 
+    let player_hand_value = hand_value(&player_hand);
+
+    println!("It is now the host's turn.");
+    println!("Host's hand: {:?}", current_host_hand);
 
     while(host_continuing) {
-        println!("Draw or pass?");
-        println!("To draw, type in 'draw' or 'd'. To pass, type in 'pass' or 'p'.");
-
         
+        if (current_hand_value < 17) {
+            let card = current_deck.remove(current_deck.len()-1);
+            current_host_hand.push(card);
+            println!("New hand: {:?}", current_host_hand)
+        }
+        else if (current_hand_value > player_hand_value && current_hand_value <= 21) {
+            println!("Host has won.");
+            game_status = "HOST WIN".to_string();
+            host_continuing = false;
+        }
+        else if (current_hand_value == player_hand_value && current_hand_value <= 21) {
+            println!("Nobody has won. Push.");
+            game_status = "PUSH".to_string();
+            host_continuing = false;
+        }
+        else if (current_hand_value >= 17 && current_hand_value <= 21 && current_hand_value < player_hand_value)
+        {
+            println!("Host reached 17 before exceeding player's hand.");
+            game_status = "HOST LOSE".to_string();
+            host_continuing = false;
+        }
+        else
+        {
+            println!("Host busted.");
+            game_status = "HOST LOSE".to_string();
+            host_continuing = false;
+        }
+
+        current_hand_value = hand_value(&current_host_hand);
     }
 
-    (current_hand, current_deck)
+    (current_host_hand, current_deck, game_status)
+}
+
+fn hand_value(hand: &Vec<String>) -> u32 {
+    let deck_map = deck_map();
+
+    let mut current_value: u32 = 0;
+
+    for card in hand {
+        current_value += deck_map.get(card).unwrap();
+    }
+
+    current_value
 }
