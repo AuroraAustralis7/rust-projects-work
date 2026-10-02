@@ -73,7 +73,7 @@ fn main() {
     // println!("{:?}", deck);
 }
 
-// clears deck and makes new deck
+// creates hashmap relating each card to its value
 fn deck_map() -> HashMap<String, u32> {
     let mut deck: HashMap<String, u32> = HashMap::new();
 
@@ -85,7 +85,7 @@ fn deck_map() -> HashMap<String, u32> {
         deck.insert(format!("{i} OF DIAMONDS"), i);
     }
 
-    // Aces
+    // Aces, default 1.
     deck.insert("ACE OF SPADES".to_string(), 1);
     deck.insert("ACE OF HEARTS".to_string(), 1);
     deck.insert("ACE OF CLUBS".to_string(), 1);
@@ -320,7 +320,19 @@ fn hand_value(hand: &Vec<String>) -> u32 {
     let mut current_value: u32 = 0;
 
     for card in hand {
-        current_value += deck_map.get(card).unwrap();
+        let mut card_value = deck_map.get(card).unwrap();
+
+        current_value += card_value;
+    }
+
+    for card in hand {
+        if (card == "ACE OF SPADES" ||
+            card == "ACE OF HEARTS" || 
+            card == "ACE OF CLUBS" ||
+            card == "ACE OF DIAMONDS") &&
+            current_value + 10 <= 21 {
+                current_value += 10;
+            }
     }
 
     current_value
